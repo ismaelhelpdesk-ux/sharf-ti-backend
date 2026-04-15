@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código fuente
 COPY . .
 
+# Hacer ejecutable el script de arranque
+RUN chmod +x start.sh
+
 # Puerto de la aplicación
 EXPOSE 8000
 
@@ -31,5 +34,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/api/validar || exit 1
 
-# Arrancar con uvicorn (producción: sin reload)
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2
+# Arrancar via script de shell para que $PORT sea expandido correctamente
+CMD ["sh", "start.sh"]
