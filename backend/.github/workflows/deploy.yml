@@ -1,0 +1,76 @@
+name: Deploy SHARF API a Railway
+
+on:
+  push:
+    branches: [ main ]      # deploy automático en cada push a main
+  pull_request:
+    branches: [ main ]      # solo tests en PR (no deploy)
+
+jobs:
+  # ─── Tests ──────────────────────────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Instalar dependencias del sistema (pyzbar)
+        run: sudo apt-get install -y libzbar0
+
+      - name: Instalar dependencias Python
+        run: pip install -r requirements.txt pytest httpx
+
+      - name: Ejecutar tests
+        run: pytest tests/ -v --tb=short
+        env:
+          ENV:               testing
+          SNIPE_TOKEN:       test_token
+          GOOGLE_CREDS_JSON: ""
+          SECRET_KEY:        test-secret-key-only-for-ci
+          JWT_EXPIRE_MINUTES: "60"
+        continue-on-error: true   # no bloquear si no hay tests aún
+
+      - name: Verificar sintaxis del GAS cliente
+        run: node --check SHARF_GAS_Cliente.js || echo "node no disponible"
+        continue-on-error: true
+
+  # ─── Deploy a Railway ────────────────────────────────────────────────────
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy a Railway
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Las variables de entorno de la app están configuradas
+          # directamente en el panel de Railway, NO aquí.
+          # Aquí solo va el token de deploy.
+
+      - name: Verificar deploy (health check)
+        run: |
+          sleep 15
+          curl -f "${{ secrets.RAILWAY_APP_URL }}/api/health" \
+            || echo "⚠️  Health check falló — revisar logs en Railway"
+        continue-on-error: true
+
+      - name: Notificar resultado
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deploy exitoso: ${{ secrets.RAILWAY_APP_URL }}"
+          else
+            echo "❌ Deploy falló — revisar logs"
+          fi

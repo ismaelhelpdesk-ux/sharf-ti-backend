@@ -1,0 +1,15 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+aiohttp==3.10.5
+reportlab==4.2.2
+Pillow==10.4.0
+pyzbar==0.1.9
+google-auth==2.34.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.145.0
+pydantic==2.8.2
+python-dotenv==1.0.1
+PyJWT==2.9.0
+slowapi==0.1.9
