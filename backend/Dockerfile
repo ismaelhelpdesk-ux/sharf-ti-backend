@@ -35,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/api/validar || exit 1
 
 # Arrancar via script de shell para que $PORT sea expandido correctamente
-CMD ["sh", "start.sh"]
+CMD ["/app/start.sh"]
