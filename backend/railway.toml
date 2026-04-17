@@ -3,7 +3,6 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/api/validar"
 healthcheckTimeout = 15
 restartPolicyType = "on_failure"
